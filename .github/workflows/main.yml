@@ -1,25 +1,45 @@
-name: Sync Ledger
+name: Fetch and Save Blockchain Data
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
-  workflow_dispatch:
+    # Runs at minute 0 past every 2nd hour (UTC)
+    - cron: '0 */2 * * *'
+  workflow_dispatch: # Allows you to run this manually anytime from the Actions tab
+
+permissions:
+  contents: write
 
 jobs:
-  sync:
+  fetch-and-save:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      - name: Download ledger
-        run: |
-          curl https://c8do-production.up.railway.app/chain -o blockchain.txt
+    - name: Fetch Blocks and Save Data
+      run: |
+        # Create output directory if it doesn't exist
+        mkdir -p data
 
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add blockchain.txt
-          git diff --cached --quiet || git commit -m "Update ledger"
+        # Fetch the entire chain from your Railway server
+        curl -s "https://web-production-0a477.up.railway.app/chain" > data/blockchain.json
+
+        # Save the last updated timestamp in UTC
+        echo "{\"last_updated\": \"$(date -u '+%Y-%m-%d %H:%M:%S UTC')\"}" > data/status.json
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+        # Stage the updated files
+        git add data/blockchain.json data/status.json
+        
+        # Check if there are actual changes before committing to avoid empty commits
+        if git diff --staged --quiet; then
+          echo "No new updates found."
+        else
+          git commit -m "Auto-update: Fetched latest blocks at $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           git push
+        fi
