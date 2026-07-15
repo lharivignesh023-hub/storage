@@ -1,10 +1,12 @@
 name: Fetch and Save Blockchain Data
 
 on:
+  push:
+    branches:
+      - main  # Triggers immediately when you commit/push to the main branch
   schedule:
-    # Runs at minute 0 past every 2nd hour (UTC)
-    - cron: '0 */2 * * *'
-  workflow_dispatch: # Allows you to run this manually anytime from the Actions tab
+    - cron: '0 */2 * * *'  # Triggers automatically every 2 hours
+  workflow_dispatch:  # Allows you to trigger it manually from the Actions tab
 
 permissions:
   contents: write
@@ -19,7 +21,7 @@ jobs:
 
     - name: Fetch Blocks and Save Data
       run: |
-        # Create output directory if it doesn't exist
+        # Create data directory if it doesn't exist
         mkdir -p data
 
         # Fetch the entire chain from your Railway server
@@ -36,7 +38,7 @@ jobs:
         # Stage the updated files
         git add data/blockchain.json data/status.json
         
-        # Check if there are actual changes before committing to avoid empty commits
+        # Only commit and push if there are actual updates to the data
         if git diff --staged --quiet; then
           echo "No new updates found."
         else
