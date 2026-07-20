@@ -24,8 +24,8 @@ jobs:
         # Create data directory if it doesn't exist
         mkdir -p data
 
-        # Fetch the entire chain from your Railway server
-        curl -s "https://web-production-0a477.up.railway.app/chain" > data/blockchain.json
+        # Fetch the entire chain from your Cloudflare Worker server
+        curl -s "https://c8doc-node.lharivignesh023.workers.dev/chain" > data/blockchain.json
 
         # Save the last updated timestamp in UTC
         echo "{\"last_updated\": \"$(date -u '+%Y-%m-%d %H:%M:%S UTC')\"}" > data/status.json
